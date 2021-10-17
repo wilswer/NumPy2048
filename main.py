@@ -34,7 +34,7 @@ class Game():
         return np.argwhere(self.board == 0)
 
     def action(self, action_str):
-        """Choose an action"""
+        """Choose an action."""
         previous_board = self.board.copy()
         new_board = self.board.copy()
 
@@ -146,7 +146,12 @@ class Game():
 
     def print_board(self):
         """Print the game state."""
-        board_string = "\r" + "+-----"*self.width
+        board_string = self.get_board_string()
+        print(board_string)
+
+    def get_board_string(self):
+        """Get a string representation of the boardstate."""
+        board_string = "+-----"*self.width
         board_string += "+" + 10*" " + f"Score: {int(self.score)}" + "\n"
         for row in self.board:
             board_string += "|"
@@ -168,9 +173,10 @@ class Game():
             board_string += "\n"
             board_string += "+-----"*self.width
             board_string += "+\n"
-        print(board_string, end='\r', flush=True)
+        return board_string
 
     def update_game(self, action_str):
+        """Given an action, update the game state and spawn a new number."""
         new_board, new_score = self.action(action_str)
 
         if (new_board == self.board).all():
@@ -179,53 +185,44 @@ class Game():
         self.board = new_board
         self.score = new_score
         self.spawn()
-        self.print_board()
+        board_string = self.get_board_string()
+        for x in board_string:
+            print("\b")
+        print(board_string, end='')
+        # sys.stdout.write('\r' + board_string)
+        # sys.stdout.flush()
         if not self.find_vacant_positions().size:
             if self.is_game_over():
                 print("Game Over!")
                 sys.exit()
 
     def run_game(self):
-
+        """Launch the game."""
         self.spawn(2)
 
-        self.print_board()
-
-        press_enabled = True
-        keypress_counter = 0
+        board_string = self.get_board_string()
+        print(board_string, end='')
+        # sys.stdout.write('\r' + board_string)
+        # sys.stdout.flush()
 
         while True:
-            keypress_counter += 1
-            keypress = read_single_keypress()
-            if press_enabled and keypress[0] == "k":
-                self.update_game("up")
-                press_enabled = False
-                keypress_counter = 0
-                continue
-            if press_enabled and keypress[0] == "j":
-                self.update_game("down")
-                press_enabled = False
-                keypress_counter = 0
-                continue
-            if press_enabled and keypress[0] == "l":
-                self.update_game("left")
-                press_enabled = False
-                keypress_counter = 0
-                continue
-            if press_enabled and keypress[0] == "h":
-                self.update_game("right")
-                press_enabled = False
-                keypress_counter = 0
-                continue
-
-            if keypress_counter > 10:
-                press_enabled = True 
-
+            event = keyboard.read_event()
+            if event.event_type == keyboard.KEY_DOWN:
+                key = event.name
+                if key == "up":
+                    self.update_game("up")
+                if key == "down":
+                    self.update_game("down")
+                if key == "left":
+                    self.update_game("left")
+                if key == "right":
+                    self.update_game("right")
+                if key == "q":
+                    sys.exit()
 
     def is_game_over(self):
-
+        """Check if the game should be terminated due to no possible moves."""
         current_board = self.board.copy()
-        current_score = self.score
         action_list = [
             "up",
             "down",
@@ -239,9 +236,14 @@ class Game():
                 return False
         return True
 
-
     def clear_board(self):
+        """Clear the board."""
         self.board = np.zeros((self.width, self.height))
+
+    def reset_game(self):
+        """Reset the game."""
+        self.clear_board()
+        self.spawn(2)
 
 
 def main():
@@ -253,3 +255,4 @@ def main():
 if __name__ == '__main__':
 
     game = main()
+    game.run_game()
