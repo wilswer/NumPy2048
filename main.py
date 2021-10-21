@@ -1,7 +1,7 @@
 import sys
+import time
+import argparse
 import numpy as np
-import keyboard
-from key_press import read_single_keypress
 
 
 class Game():
@@ -11,7 +11,7 @@ class Game():
         """Initialize the game."""
         self.width = width
         self.height = height
-        self.board = np.zeros((self.width, self.height))
+        self.board = np.zeros((self.height, self.width))
         self.rng = rng
         self.score = 0
 
@@ -144,10 +144,19 @@ class Game():
                         score += board[row, col]
         return board, score
 
-    def print_board(self):
+    def print_board(self, play_mode=True):
         """Print the game state."""
         board_string = self.get_board_string()
-        print(board_string)
+        if play_mode:
+            board_string = """
+            Command-line 2048!
+
+            Press up, down, left or right to control the board.
+
+            """ + "\n\n" + board_string
+        for x in board_string:
+            print("""\b""")
+        print(board_string, end='')
 
     def get_board_string(self):
         """Get a string representation of the boardstate."""
@@ -173,6 +182,7 @@ class Game():
             board_string += "\n"
             board_string += "+-----"*self.width
             board_string += "+\n"
+        board_string = f"""{board_string}"""
         return board_string
 
     def update_game(self, action_str):
@@ -185,25 +195,12 @@ class Game():
         self.board = new_board
         self.score = new_score
         self.spawn()
-        board_string = self.get_board_string()
-        for x in board_string:
-            print("\b")
-        print(board_string, end='')
-        # sys.stdout.write('\r' + board_string)
-        # sys.stdout.flush()
-        if not self.find_vacant_positions().size:
-            if self.is_game_over():
-                print("Game Over!")
-                sys.exit()
 
     def run_game(self):
         """Launch the game."""
+        import keyboard
         self.spawn(2)
-
-        board_string = self.get_board_string()
-        print(board_string, end='')
-        # sys.stdout.write('\r' + board_string)
-        # sys.stdout.flush()
+        self.print_board()
 
         while True:
             event = keyboard.read_event()
@@ -219,6 +216,31 @@ class Game():
                     self.update_game("right")
                 if key == "q":
                     sys.exit()
+            self.print_board()
+            if self.is_game_over():
+                print("Game Over!")
+                sys.exit()
+
+    def simulate_game(self, strategy_str='urdl', do_print=True):
+        """Simulate the game given some sequence of actions."""
+        self.spawn(2)
+        str_cntr = 0
+        while not self.is_game_over():
+            action = strategy_str[str_cntr]
+            if action == "u":
+                self.update_game("up")
+            if action == "d":
+                self.update_game("down")
+            if action == "l":
+                self.update_game("left")
+            if action == "r":
+                self.update_game("right")
+            str_cntr = (str_cntr + 1) % len(strategy_str)
+
+            if do_print:
+                # time.sleep(0.1)
+                self.print_board(play_mode=True)
+        self.print_board(play_mode=False)
 
     def is_game_over(self):
         """Check if the game should be terminated due to no possible moves."""
@@ -229,6 +251,8 @@ class Game():
             "right",
             "left",
         ]
+        if self.find_vacant_positions().size:
+            return False
 
         for action in action_list:
             check_board, check_score = self.action(action)
@@ -247,12 +271,86 @@ class Game():
 
 
 def main():
-    SEED = 987654323
-    rng = np.random.RandomState(SEED)
-    return Game(rng)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--height",
+        default=4,
+        help="Choose board height",
+        type=int,
+    )
+    parser.add_argument(
+        "--width",
+        default=4,
+        help="Choose board size width",
+        type=int,
+    )
+    parser.add_argument(
+        "--seed",
+        default=None,
+        help="Choose RNG seed",
+        type=int,
+    )
+    parser.add_argument(
+        "--size",
+        default=None,
+        help="Choose board size (size x size square)",
+        type=int,
+    )
+    parser.add_argument(
+        "--play",
+        dest='play',
+        default=True,
+        help="Run in interactive play mode",
+        action='store_true',
+    )
+    parser.add_argument(
+        "--simulate",
+        dest='play',
+        default=False,
+        help="Run in simulate mode",
+        action='store_false',
+    )
+    parser.add_argument(
+        "--draw",
+        dest='draw',
+        help="Draw board in simulate mode",
+        action='store_true',
+    )
+    parser.add_argument(
+        "--no-draw",
+        dest='draw',
+        help="Do not draw board in simulate mode",
+        action='store_false',
+    )
+    parser.add_argument(
+        "--strategy",
+        default="urdl",
+        help="Choose simulation strategy (u=up, d=down, r=right, l=left)",
+        type=str,
+    )
+    args = parser.parse_args()
+    if args.seed is None:
+        rng = np.random.RandomState()
+    else:
+        rng = np.random.RandomState(args.seed)
+    if args.size is None:
+        game = Game(
+            rng=rng,
+            height=args.height,
+            width=args.width,
+        )
+    else:
+        game = Game(
+            rng=rng,
+            height=args.size,
+            width=args.size,
+        )
+    if args.play:
+        game.run_game()
+    else:
+        game.simulate_game(args.strategy, args.draw)
 
 
 if __name__ == '__main__':
 
-    game = main()
-    game.run_game()
+    main()
