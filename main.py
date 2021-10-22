@@ -1,5 +1,7 @@
+import os
 import sys
 import time
+import readline
 import argparse
 import numpy as np
 
@@ -146,22 +148,37 @@ class Game():
 
     def print_board(self, play_mode=True):
         """Print the game state."""
+        cols = os.get_terminal_size().columns
+        rows = os.get_terminal_size().lines
         board_string = self.get_board_string()
+
+        with open('2048-alt.txt', 'r') as file:
+            info_string = file.read()
+            info_string += "\n\n"
+
         if play_mode:
-            board_string = """
-            Command-line 2048!
+            if not self.is_game_over():
+                info_string += "Command-line 2048!\n"
+                info_string += "Press up, down, left or right to control the board.\n\n"
+            else:
+                    info_string += "GAME OVER"
+                    info_string += "\n\n"
 
-            Press up, down, left or right to control the board.
-
-            """ + "\n\n" + board_string
+        board_string = info_string + board_string
+        board_string_lst = board_string.split('\n')
+        print(len(board_string_lst))
+        pad_string = "\n"*((rows - len(board_string_lst))//2)
+        board_string = pad_string + board_string + pad_string
         for x in board_string:
             print("""\b""")
-        print(board_string, end='')
+        for line in board_string.split('\n'):
+            print(line.center(cols))
 
     def get_board_string(self):
         """Get a string representation of the boardstate."""
-        board_string = "+-----"*self.width
-        board_string += "+" + 10*" " + f"Score: {int(self.score)}" + "\n"
+        board_string = f"Score: {int(self.score)}" + "\n"
+        board_string += "+-----"*self.width
+        board_string += "+\n"
         for row in self.board:
             board_string += "|"
             for value in row:
@@ -182,7 +199,6 @@ class Game():
             board_string += "\n"
             board_string += "+-----"*self.width
             board_string += "+\n"
-        board_string = f"""{board_string}"""
         return board_string
 
     def update_game(self, action_str):
@@ -218,28 +234,39 @@ class Game():
                     sys.exit()
             self.print_board()
             if self.is_game_over():
-                print("Game Over!")
                 sys.exit()
 
-    def simulate_game(self, strategy_str='urdl', do_print=True):
+    def simulate_game(self, strategy_str=None, do_print=True, sleep_time=0):
         """Simulate the game given some sequence of actions."""
         self.spawn(2)
         str_cntr = 0
+        action_list = ['up', 'down', 'right', 'left']
+        previous_action = ''
         while not self.is_game_over():
-            action = strategy_str[str_cntr]
-            if action == "u":
-                self.update_game("up")
-            if action == "d":
-                self.update_game("down")
-            if action == "l":
-                self.update_game("left")
-            if action == "r":
-                self.update_game("right")
-            str_cntr = (str_cntr + 1) % len(strategy_str)
+            if not strategy_str:
+                action = self.rng.choice(
+                    [i for i in action_list if i != previous_action],
+                    1
+                )
+                action = action[0]
+                self.update_game(action)
+                previous_action = action
+            else:
+                action = strategy_str[str_cntr]
+                if action == "u":
+                    self.update_game("up")
+                if action == "d":
+                    self.update_game("down")
+                if action == "l":
+                    self.update_game("left")
+                if action == "r":
+                    self.update_game("right")
+                str_cntr = (str_cntr + 1) % len(strategy_str)
 
             if do_print:
-                # time.sleep(0.1)
-                self.print_board(play_mode=True)
+                if sleep_time:
+                    time.sleep(sleep_time)
+                self.print_board(play_mode=False)
         self.print_board(play_mode=False)
 
     def is_game_over(self):
@@ -324,9 +351,16 @@ def main():
     )
     parser.add_argument(
         "--strategy",
-        default="urdl",
+        default="",
         help="Choose simulation strategy (u=up, d=down, r=right, l=left)",
         type=str,
+    )
+    parser.add_argument(
+        "--sleep-time",
+        dest='sleep_time',
+        default=0.0,
+        help="Set simulation printing speed (waiting time between iterations)",
+        type=float,
     )
     args = parser.parse_args()
     if args.seed is None:
@@ -348,7 +382,11 @@ def main():
     if args.play:
         game.run_game()
     else:
-        game.simulate_game(args.strategy, args.draw)
+        game.simulate_game(
+            args.strategy,
+            args.draw,
+            args.sleep_time,
+        )
 
 
 if __name__ == '__main__':
