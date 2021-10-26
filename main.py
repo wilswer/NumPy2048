@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import readline
 import argparse
 import numpy as np
 
@@ -152,17 +151,19 @@ class Game():
         rows = os.get_terminal_size().lines
         board_string = self.get_board_string()
 
-        with open('2048-alt.txt', 'r') as file:
+        with open('2048.txt', 'r') as file:
             info_string = file.read()
             info_string += "\n\n"
 
         if play_mode:
             if not self.is_game_over():
                 info_string += "Command-line 2048!\n"
-                info_string += "Press up, down, left or right to control the board.\n\n"
+                info_string += """
+                Press up, down, left or right to control the board.\n\n
+                """
             else:
-                    info_string += "GAME OVER"
-                    info_string += "\n\n"
+                info_string += "GAME OVER"
+                info_string += "\n\n"
 
         board_string = info_string + board_string
         board_string_lst = board_string.split('\n')
@@ -212,26 +213,48 @@ class Game():
         self.score = new_score
         self.spawn()
 
-    def run_game(self):
+    def game_action(self, action_str):
+        """Choose action in game mode."""
+        if action_str == "up":
+            self.update_game("up")
+        if action_str == "down":
+            self.update_game("down")
+        if action_str == "left":
+            self.update_game("left")
+        if action_str == "right":
+            self.update_game("right")
+        if action_str == "q":
+            sys.exit()
+        if action_str == "quit":
+            sys.exit()
+
+    def run_game(self, interactive=True):
         """Launch the game."""
-        import keyboard
+        if interactive:
+            import keyboard
         self.spawn(2)
         self.print_board()
 
         while True:
-            event = keyboard.read_event()
-            if event.event_type == keyboard.KEY_DOWN:
-                key = event.name
-                if key == "up":
-                    self.update_game("up")
-                if key == "down":
-                    self.update_game("down")
-                if key == "left":
-                    self.update_game("left")
-                if key == "right":
-                    self.update_game("right")
-                if key == "q":
-                    sys.exit()
+            if interactive:
+                event = keyboard.read_event()
+                if event.event_type == keyboard.KEY_DOWN:
+                    key = event.name
+                    self.game_action(key)
+            else:
+                key = input(
+                    "Choose action ([u]p, [d]own, [l]eft, [r]ight, [q]uit): "
+                )
+                if len(key) == 1:
+                    letter_dict = {
+                        'u': 'up',
+                        'd': 'down',
+                        'l': 'left',
+                        'r': 'right',
+                        'q': 'quit',
+                    }
+                    key = letter_dict[key]
+                self.game_action(key)
             self.print_board()
             if self.is_game_over():
                 sys.exit()
@@ -340,6 +363,7 @@ def main():
     parser.add_argument(
         "--draw",
         dest='draw',
+        default=True,
         help="Draw board in simulate mode",
         action='store_true',
     )
@@ -347,6 +371,19 @@ def main():
         "--no-draw",
         dest='draw',
         help="Do not draw board in simulate mode",
+        action='store_false',
+    )
+    parser.add_argument(
+        "--interactive",
+        dest='interactive',
+        default=True,
+        help="Run game in interactive mode",
+        action='store_true',
+    )
+    parser.add_argument(
+        "--non-interactive",
+        dest='interactive',
+        help="Run game in non-interactive mode",
         action='store_false',
     )
     parser.add_argument(
@@ -380,7 +417,7 @@ def main():
             width=args.size,
         )
     if args.play:
-        game.run_game()
+        game.run_game(args.interactive)
     else:
         game.simulate_game(
             args.strategy,
