@@ -189,10 +189,11 @@ class Game():
         """Kill the screen."""
         self.stdscr.refresh()
         self.stdscr.clrtoeol()
+        curses.echo()
         curses.nocbreak()
         self.stdscr.keypad(False)
-        curses.echo()
         curses.curs_set(1)
+        curses.endwin()
 
     def draw_game(self):
         """Draw the game state."""
