@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import argparse
+import curses
 import numpy as np
 
 
@@ -15,6 +16,9 @@ class Game():
         self.board = np.zeros((self.height, self.width))
         self.rng = rng
         self.score = 0
+        self.spawn(2)
+        self.stdscr = curses.initscr()
+        self.initialize_screen()
 
     def spawn(self, n_spawns=1):
         """Spawn either 2 or 4 in a vacant position on the board."""
@@ -145,6 +149,102 @@ class Game():
                         score += board[row, col]
         return board, score
 
+    def initialize_screen(self):
+        """Initialize the screen."""
+        curses.noecho()
+        curses.cbreak()
+        curses.curs_set(0)
+        self.stdscr.keypad(True)
+        self.stdscr.clear()
+        self.stdscr.refresh()
+        cols = os.get_terminal_size().columns
+        rows = os.get_terminal_size().lines
+        board_string = self.get_board_string()
+
+        with open('2048.txt', 'r') as file:
+            info_string = file.read()
+            info_string += "\n\n"
+
+        if not self.is_game_over():
+            info_string += "Command-line 2048!\n"
+            info_string += """
+            Press up, down, left or right to control the board.\n
+            Press "Q" to quit.\n\n
+            """
+        else:
+            info_string += "GAME OVER"
+            info_string += "\n\n"
+
+        board_string = info_string + board_string
+        board_string_lst = board_string.split('\n')
+        pad_string = "\n"*((rows - len(board_string_lst))//2)
+        board_string = pad_string + board_string + pad_string
+        board_string_lst = board_string.split('\n')
+        for r, l in enumerate(board_string_lst):
+            col = cols//2 - len(l)//2
+            row = rows//2 - len(board_string_lst)//2 + r
+            self.stdscr.addstr(row, col, l)
+
+    def kill_screen(self):
+        """Kill the screen."""
+        self.stdscr.refresh()
+        self.stdscr.clrtoeol()
+        curses.nocbreak()
+        self.stdscr.keypad(False)
+        curses.echo()
+        curses.curs_set(1)
+
+    def draw_game(self):
+        """Draw the game state."""
+        cols = os.get_terminal_size().columns
+        rows = os.get_terminal_size().lines
+        board_string = self.get_board_string()
+
+        with open('2048.txt', 'r') as file:
+            info_string = file.read()
+            info_string += "\n\n"
+
+        if not self.is_game_over():
+            info_string += "Command-line 2048!\n"
+            info_string += """
+            Press up, down, left or right to control the board.\n
+            Press "Q" to quit.\n\n
+            """
+        else:
+            info_string += "GAME OVER"
+            info_string += "\n\n"
+
+        board_string = info_string + board_string
+        board_string_lst = board_string.split('\n')
+        pad_string = "\n"*((rows - len(board_string_lst))//2)
+        board_string = pad_string + board_string + pad_string
+        board_string_lst = board_string.split('\n')
+        self.stdscr.erase()
+        for r, l in enumerate(board_string_lst):
+            col = cols//2 - len(l)//2
+            row = rows//2 - len(board_string_lst)//2 + r
+            self.stdscr.addstr(row, col, l)
+
+    def interactive_game(self):
+        """Perform an update of the interactive game."""
+        while not self.is_game_over():
+            self.stdscr.refresh()
+            self.stdscr.clrtoeol()
+            char = self.stdscr.getch()
+            if char == 113:  # q
+                self.kill_screen()
+                break
+            elif char == curses.KEY_RIGHT:
+                self.game_action('right')
+            elif char == curses.KEY_LEFT:
+                self.game_action('left')
+            elif char == curses.KEY_UP:
+                self.game_action('up')
+            elif char == curses.KEY_DOWN:
+                self.game_action('down')
+            self.draw_game()
+        self.kill_screen()
+
     def print_board(self, play_mode=True):
         """Print the game state."""
         cols = os.get_terminal_size().columns
@@ -223,16 +323,19 @@ class Game():
             self.update_game("left")
         if action_str == "right":
             self.update_game("right")
-        if action_str == "q":
-            sys.exit()
-        if action_str == "quit":
-            sys.exit()
 
     def run_game(self, interactive=True):
         """Launch the game."""
         if interactive:
             import keyboard
-        self.spawn(2)
+            if os.geteuid() != 0:
+                print(
+                    """
+                    Interactive mode requires sudo rights.
+                    Defaulting to non-interactive mode.
+                    """
+                )
+                interactive = False
         self.print_board()
 
         while True:
@@ -360,8 +463,7 @@ def main():
         help="Run in simulate mode",
         action='store_false',
     )
-    parser.add_argument(
-        "--draw",
+    parser.add_argument("--draw",
         dest='draw',
         default=True,
         help="Draw board in simulate mode",
@@ -417,7 +519,7 @@ def main():
             width=args.size,
         )
     if args.play:
-        game.run_game(args.interactive)
+        game.interactive_game()
     else:
         game.simulate_game(
             args.strategy,
