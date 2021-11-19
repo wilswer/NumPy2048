@@ -1,5 +1,6 @@
 import os
 import sys
+import traceback
 import time
 import argparse
 import curses
@@ -433,7 +434,7 @@ class Game():
 
     def clear_board(self):
         """Clear the board."""
-        self.board = np.zeros((self.width, self.height))
+        self.board = np.zeros((self.height, self.width))
 
     def reset_game(self):
         """Reset the game."""
@@ -539,14 +540,20 @@ def main():
             height=args.size,
             width=args.size,
         )
-    if args.play:
-        game.interactive_game()
-    else:
-        game.simulate_game(
-            args.strategy,
-            args.draw,
-            args.sleep_time,
-        )
+    try:
+        if args.play:
+            game.interactive_game()
+        else:
+            game.simulate_game(
+                args.strategy,
+                args.draw,
+                args.sleep_time,
+            )
+    except Exception:
+        game.kill_screen()
+        print(traceback.format_exc())
+        print(game.board)
+        sys.exit()
 
 
 if __name__ == '__main__':
