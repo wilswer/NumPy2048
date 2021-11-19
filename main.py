@@ -9,7 +9,7 @@ import numpy as np
 class Game():
     """Implementation of the game 2048."""
 
-    def __init__(self, rng, width=4, height=4):
+    def __init__(self, rng, gui_mode=False, width=4, height=4):
         """Initialize the game."""
         self.width = width
         self.height = height
@@ -17,8 +17,9 @@ class Game():
         self.rng = rng
         self.score = 0
         self.spawn(2)
-        self.stdscr = curses.initscr()
-        self.initialize_screen()
+        if gui_mode:
+            self.stdscr = curses.initscr()
+            self.initialize_screen()
 
     def spawn(self, n_spawns=1):
         """Spawn either 2 or 4 in a vacant position on the board."""
@@ -212,14 +213,16 @@ class Game():
             Press "Q" to quit.\n\n
             """
         else:
-            info_string += "GAME OVER"
-            info_string += "\n\n"
+            info_string += "GAME OVER\n"
+            info_string += "Press 'Q' to quit.\n"
+            info_string += "Press 'R' to reset.\n\n"
 
         board_string = info_string + board_string
         board_string_lst = board_string.split('\n')
         pad_string = "\n"*((rows - len(board_string_lst))//2)
         board_string = pad_string + board_string + pad_string
         board_string_lst = board_string.split('\n')
+        self.stdscr.refresh()
         self.stdscr.erase()
         for r, l in enumerate(board_string_lst):
             col = cols//2 - len(l)//2
@@ -228,21 +231,23 @@ class Game():
 
     def interactive_game(self):
         """Perform an update of the interactive game."""
-        while not self.is_game_over():
-            self.stdscr.refresh()
-            self.stdscr.clrtoeol()
+        while True:
             char = self.stdscr.getch()
             if char == 113:  # q
                 self.kill_screen()
                 break
-            elif char == curses.KEY_RIGHT:
-                self.game_action('right')
-            elif char == curses.KEY_LEFT:
-                self.game_action('left')
-            elif char == curses.KEY_UP:
-                self.game_action('up')
-            elif char == curses.KEY_DOWN:
-                self.game_action('down')
+            if not self.is_game_over():
+                if char == curses.KEY_RIGHT:
+                    self.game_action('right')
+                if char == curses.KEY_LEFT:
+                    self.game_action('left')
+                if char == curses.KEY_UP:
+                    self.game_action('up')
+                if char == curses.KEY_DOWN:
+                    self.game_action('down')
+            else:
+                if char == 114:
+                    self.reset_game()
             self.draw_game()
         self.kill_screen()
 
@@ -369,32 +374,44 @@ class Game():
         str_cntr = 0
         action_list = ['up', 'down', 'right', 'left']
         previous_action = ''
-        while not self.is_game_over():
-            if not strategy_str:
-                action = self.rng.choice(
-                    [i for i in action_list if i != previous_action],
-                    1
-                )
-                action = action[0]
-                self.update_game(action)
-                previous_action = action
-            else:
-                action = strategy_str[str_cntr]
-                if action == "u":
-                    self.update_game("up")
-                if action == "d":
-                    self.update_game("down")
-                if action == "l":
-                    self.update_game("left")
-                if action == "r":
-                    self.update_game("right")
-                str_cntr = (str_cntr + 1) % len(strategy_str)
+        while True:
+            if not self.is_game_over():
+                if not strategy_str:
+                    action = self.rng.choice(
+                        [i for i in action_list if i != previous_action],
+                        1
+                    )
+                    action = action[0]
+                    self.update_game(action)
+                    previous_action = action
+                else:
+                    action = strategy_str[str_cntr]
+                    if action == "u":
+                        self.update_game("up")
+                    if action == "d":
+                        self.update_game("down")
+                    if action == "l":
+                        self.update_game("left")
+                    if action == "r":
+                        self.update_game("right")
+                    str_cntr = (str_cntr + 1) % len(strategy_str)
 
-            if do_print:
-                if sleep_time:
-                    time.sleep(sleep_time)
-                self.print_board(play_mode=False)
-        self.print_board(play_mode=False)
+                if do_print:
+                    if sleep_time:
+                        time.sleep(sleep_time)
+                    # self.print_board(play_mode=False)
+                    self.draw_game()
+            else:
+                self.draw_game()
+                char = self.stdscr.getch()
+                if char == 113:  # q
+                    self.kill_screen()
+                    break
+                if char == 114:  # q
+                    self.reset_game()
+        self.kill_screen()
+
+        # self.print_board(play_mode=False)
 
     def is_game_over(self):
         """Check if the game should be terminated due to no possible moves."""
@@ -421,6 +438,7 @@ class Game():
     def reset_game(self):
         """Reset the game."""
         self.clear_board()
+        self.score = 0
         self.spawn(2)
 
 
@@ -510,12 +528,14 @@ def main():
     if args.size is None:
         game = Game(
             rng=rng,
+            gui_mode=True,
             height=args.height,
             width=args.width,
         )
     else:
         game = Game(
             rng=rng,
+            gui_mode=True,
             height=args.size,
             width=args.size,
         )
