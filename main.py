@@ -9,7 +9,7 @@ import numpy as np
 
 
 class CoreGame():
-    """Implementation of the game 2048."""
+    """Core mechanics of the game 2048 in NumPy."""
 
     def __init__(self, rng, width=4, height=4):
         """Initialize the game."""
