@@ -9,7 +9,7 @@
     \|_______|    \|_______|          \|__|    \|_______|
 ```
 ## Intro
-A terminal-based Python/NumPy implementation of the game 2048. Frontend developed using curses.
+A terminal-based Python/NumPy implementation of the game "2048" originally created by Gabriele Cirulli. Frontend developed using curses.
 
 ## Usage
 - Basic usage: `python main.py` launches the game in "interactive" mode.
