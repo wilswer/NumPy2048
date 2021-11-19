@@ -8,10 +8,10 @@ import curses
 import numpy as np
 
 
-class Game():
+class CoreGame():
     """Implementation of the game 2048."""
 
-    def __init__(self, rng, gui_mode=False, width=4, height=4):
+    def __init__(self, rng, width=4, height=4):
         """Initialize the game."""
         self.width = width
         self.height = height
@@ -19,9 +19,6 @@ class Game():
         self.rng = rng
         self.score = 0
         self.spawn(2)
-        if gui_mode:
-            self.stdscr = curses.initscr()
-            self.initialize_screen()
 
     def spawn(self, n_spawns=1):
         """Spawn either 2 or 4 in a vacant position on the board."""
@@ -152,6 +149,66 @@ class Game():
                         score += board[row, col]
         return board, score
 
+    def update_game(self, action_str):
+        """Given an action, update the game state and spawn a new number."""
+        new_board, new_score = self.action(action_str)
+
+        if (new_board == self.board).all():
+            return
+
+        self.board = new_board
+        self.score = new_score
+        self.spawn()
+
+    def game_action(self, action_str):
+        """Choose action in game mode."""
+        if action_str == "up":
+            self.update_game("up")
+        if action_str == "down":
+            self.update_game("down")
+        if action_str == "left":
+            self.update_game("left")
+        if action_str == "right":
+            self.update_game("right")
+
+    def is_game_over(self):
+        """Check if the game should be terminated due to no possible moves."""
+        current_board = self.board.copy()
+        action_list = [
+            "up",
+            "down",
+            "right",
+            "left",
+        ]
+        if self.find_vacant_positions().size:
+            return False
+
+        for action in action_list:
+            check_board, check_score = self.action(action)
+            if not (check_board == current_board).all():
+                return False
+        return True
+
+    def clear_board(self):
+        """Clear the board."""
+        self.board = np.zeros((self.height, self.width))
+
+    def reset_game(self):
+        """Reset the game."""
+        self.clear_board()
+        self.score = 0
+        self.spawn(2)
+
+
+class TerminalGame(CoreGame):
+    """Terminal implementation of 2048."""
+
+    def __init__(self, rng, width=4, height=4):
+        """Initialize the class."""
+        super().__init__(rng, width, height)
+        self.stdscr = curses.initscr()
+        self.initialize_screen()
+
     def initialize_screen(self):
         """Initialize the screen."""
         curses.noecho()
@@ -274,28 +331,6 @@ class Game():
             board_string += "+\n"
         return board_string
 
-    def update_game(self, action_str):
-        """Given an action, update the game state and spawn a new number."""
-        new_board, new_score = self.action(action_str)
-
-        if (new_board == self.board).all():
-            return
-
-        self.board = new_board
-        self.score = new_score
-        self.spawn()
-
-    def game_action(self, action_str):
-        """Choose action in game mode."""
-        if action_str == "up":
-            self.update_game("up")
-        if action_str == "down":
-            self.update_game("down")
-        if action_str == "left":
-            self.update_game("left")
-        if action_str == "right":
-            self.update_game("right")
-
     def simulate_game(self, strategy_str=None, do_print=True, sleep_time=0):
         """Simulate the game given some sequence of actions."""
         self.spawn(2)
@@ -338,36 +373,6 @@ class Game():
                 if char == 114:  # q
                     self.reset_game()
         self.kill_screen()
-
-        # self.print_board(play_mode=False)
-
-    def is_game_over(self):
-        """Check if the game should be terminated due to no possible moves."""
-        current_board = self.board.copy()
-        action_list = [
-            "up",
-            "down",
-            "right",
-            "left",
-        ]
-        if self.find_vacant_positions().size:
-            return False
-
-        for action in action_list:
-            check_board, check_score = self.action(action)
-            if not (check_board == current_board).all():
-                return False
-        return True
-
-    def clear_board(self):
-        """Clear the board."""
-        self.board = np.zeros((self.height, self.width))
-
-    def reset_game(self):
-        """Reset the game."""
-        self.clear_board()
-        self.score = 0
-        self.spawn(2)
 
 
 def main():
@@ -443,16 +448,14 @@ def main():
     else:
         rng = np.random.RandomState(args.seed)
     if args.size is None:
-        game = Game(
+        game = TerminalGame(
             rng=rng,
-            gui_mode=True,
             height=args.height,
             width=args.width,
         )
     else:
-        game = Game(
+        game = TerminalGame(
             rng=rng,
-            gui_mode=True,
             height=args.size,
             width=args.size,
         )
