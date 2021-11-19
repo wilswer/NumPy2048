@@ -1,3 +1,4 @@
+"""Logic and curses frontend for 2048 implementation."""
 import os
 import sys
 import traceback
@@ -370,6 +371,7 @@ class Game():
 
 
 def main():
+    """Parse arguments and run script."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--height",
@@ -409,7 +411,8 @@ def main():
         help="Run in simulate mode",
         action='store_false',
     )
-    parser.add_argument("--draw",
+    parser.add_argument(
+        "--draw",
         dest='draw',
         default=True,
         help="Draw board in simulate mode",
