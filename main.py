@@ -166,13 +166,12 @@ class Game():
         with open('2048.txt', 'r') as file:
             info_string = file.read()
             info_string += "\n\n"
+        self.header_string = info_string
 
         if not self.is_game_over():
-            info_string += "Command-line 2048!\n"
-            info_string += """
-            Press up, down, left or right to control the board.\n
-            Press "Q" to quit.\n\n
-            """
+            info_string += "Command-line 2048!\n\n"
+            info_string += "Press ↑, ↓, ← or → to control the board.\n"
+            info_string += "Press 'Q' to quit.\n\n"
         else:
             info_string += "GAME OVER"
             info_string += "\n\n"
@@ -202,17 +201,12 @@ class Game():
         cols = os.get_terminal_size().columns
         rows = os.get_terminal_size().lines
         board_string = self.get_board_string()
-
-        with open('2048.txt', 'r') as file:
-            info_string = file.read()
-            info_string += "\n\n"
+        info_string = self.header_string
 
         if not self.is_game_over():
-            info_string += "Command-line 2048!\n"
-            info_string += """
-            Press up, down, left or right to control the board.\n
-            Press "Q" to quit.\n\n
-            """
+            info_string += "Command-line 2048!\n\n"
+            info_string += "Press ↑, ↓, ← or → to control the board.\n"
+            info_string += "Press 'Q' to quit.\n\n"
         else:
             info_string += "GAME OVER\n"
             info_string += "Press 'Q' to quit.\n"
@@ -230,8 +224,8 @@ class Game():
             row = rows//2 - len(board_string_lst)//2 + r
             self.stdscr.addstr(row, col, l)
 
-    def interactive_game(self):
-        """Perform an update of the interactive game."""
+    def run_game(self):
+        """Run the game."""
         while True:
             char = self.stdscr.getch()
             if char == 113:  # q
@@ -251,36 +245,6 @@ class Game():
                     self.reset_game()
             self.draw_game()
         self.kill_screen()
-
-    def print_board(self, play_mode=True):
-        """Print the game state."""
-        cols = os.get_terminal_size().columns
-        rows = os.get_terminal_size().lines
-        board_string = self.get_board_string()
-
-        with open('2048.txt', 'r') as file:
-            info_string = file.read()
-            info_string += "\n\n"
-
-        if play_mode:
-            if not self.is_game_over():
-                info_string += "Command-line 2048!\n"
-                info_string += """
-                Press up, down, left or right to control the board.\n\n
-                """
-            else:
-                info_string += "GAME OVER"
-                info_string += "\n\n"
-
-        board_string = info_string + board_string
-        board_string_lst = board_string.split('\n')
-        print(len(board_string_lst))
-        pad_string = "\n"*((rows - len(board_string_lst))//2)
-        board_string = pad_string + board_string + pad_string
-        for x in board_string:
-            print("""\b""")
-        for line in board_string.split('\n'):
-            print(line.center(cols))
 
     def get_board_string(self):
         """Get a string representation of the boardstate."""
@@ -330,44 +294,6 @@ class Game():
             self.update_game("left")
         if action_str == "right":
             self.update_game("right")
-
-    def run_game(self, interactive=True):
-        """Launch the game."""
-        if interactive:
-            import keyboard
-            if os.geteuid() != 0:
-                print(
-                    """
-                    Interactive mode requires sudo rights.
-                    Defaulting to non-interactive mode.
-                    """
-                )
-                interactive = False
-        self.print_board()
-
-        while True:
-            if interactive:
-                event = keyboard.read_event()
-                if event.event_type == keyboard.KEY_DOWN:
-                    key = event.name
-                    self.game_action(key)
-            else:
-                key = input(
-                    "Choose action ([u]p, [d]own, [l]eft, [r]ight, [q]uit): "
-                )
-                if len(key) == 1:
-                    letter_dict = {
-                        'u': 'up',
-                        'd': 'down',
-                        'l': 'left',
-                        'r': 'right',
-                        'q': 'quit',
-                    }
-                    key = letter_dict[key]
-                self.game_action(key)
-            self.print_board()
-            if self.is_game_over():
-                sys.exit()
 
     def simulate_game(self, strategy_str=None, do_print=True, sleep_time=0):
         """Simulate the game given some sequence of actions."""
@@ -496,19 +422,6 @@ def main():
         action='store_false',
     )
     parser.add_argument(
-        "--interactive",
-        dest='interactive',
-        default=True,
-        help="Run game in interactive mode",
-        action='store_true',
-    )
-    parser.add_argument(
-        "--non-interactive",
-        dest='interactive',
-        help="Run game in non-interactive mode",
-        action='store_false',
-    )
-    parser.add_argument(
         "--strategy",
         default="",
         help="Choose simulation strategy (u=up, d=down, r=right, l=left)",
@@ -542,7 +455,7 @@ def main():
         )
     try:
         if args.play:
-            game.interactive_game()
+            game.run_game()
         else:
             game.simulate_game(
                 args.strategy,
