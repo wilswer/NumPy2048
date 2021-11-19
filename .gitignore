@@ -1,2 +1,5 @@
-*.el
-*.pyc
+.*
+!/.gitignore
+/unused_files
+/strategies
+/__pycache__
