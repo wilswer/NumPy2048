@@ -19,6 +19,7 @@ class CoreGame():
         self.rng = rng
         self.score = 0
         self.spawn(2)
+        self.action_history = []
 
     def spawn(self, n_spawns=1):
         """Spawn either 2 or 4 in a vacant position on the board."""
@@ -38,10 +39,11 @@ class CoreGame():
         """Find vacant positions on the board."""
         return np.argwhere(self.board == 0)
 
-    def action(self, action_str):
+    def action(self, action_str, board, score):
         """Choose an action."""
-        previous_board = self.board.copy()
-        new_board = self.board.copy()
+        previous_board = board.copy()
+        previous_score = score
+        new_board = board.copy()
 
         for col in range(self.width):
             empty_places = np.argwhere(new_board[:, col] == 0).flatten()
@@ -99,13 +101,12 @@ class CoreGame():
                     :len(empty_places)
                 ] = previous_board[row, empty_places]
 
-        new_board, score = self.merge(action_str, new_board)
+        new_board, score = self.merge(action_str, new_board, previous_score)
 
         return new_board, score
 
-    def merge(self, action_str, board):
+    def merge(self, action_str, board, score):
         """Merge adjacent values after action given the action."""
-        score = self.score
 
         if action_str == "up":
             for col in range(self.width):
@@ -149,16 +150,25 @@ class CoreGame():
                         score += board[row, col]
         return board, score
 
+    def valid_action(self, action_str, board):
+        """Check wether an action is valid."""
+        new_board, new_score = self.action(action_str, board, 0)
+        if (new_board == self.board).all():
+            return False
+        else:
+            return True
+
     def update_game(self, action_str):
         """Given an action, update the game state and spawn a new number."""
-        new_board, new_score = self.action(action_str)
-
-        if (new_board == self.board).all():
-            return
-
-        self.board = new_board
-        self.score = new_score
-        self.spawn()
+        if self.valid_action(action_str, self.board):
+            self.board, self.score = self.action(
+                action_str,
+                self.board,
+                self.score
+            )
+            self.spawn()
+        else:
+            pass
 
     def game_action(self, action_str):
         """Choose action in game mode."""
@@ -170,6 +180,7 @@ class CoreGame():
             self.update_game("left")
         if action_str == "right":
             self.update_game("right")
+        self.action_history.append(action_str)
 
     def is_game_over(self):
         """Check if the game should be terminated due to no possible moves."""
@@ -184,7 +195,9 @@ class CoreGame():
             return False
 
         for action in action_list:
-            check_board, check_score = self.action(action)
+            check_board, check_score = self.action(
+                action, self.board, self.score
+            )
             if not (check_board == current_board).all():
                 return False
         return True
@@ -221,7 +234,7 @@ class TerminalGame(CoreGame):
         rows = os.get_terminal_size().lines
         board_string = self.get_board_string()
 
-        with open('2048.txt', 'r') as file:
+        with open(os.path.join('assets', '2048.txt'), 'r') as file:
             info_string = file.read()
             info_string += "\n\n"
         self.header_string = info_string
@@ -266,7 +279,7 @@ class TerminalGame(CoreGame):
             info_string += "Press ↑, ↓, ← or → to control the board.\n"
             info_string += "Press 'Q' to quit.\n\n"
         else:
-            info_string += "GAME OVER\n"
+            info_string += "GAME OVER\n\n"
             info_string += "Press 'Q' to quit.\n"
             info_string += "Press 'R' to reset.\n\n"
 
@@ -289,6 +302,8 @@ class TerminalGame(CoreGame):
             if char == 113:  # q
                 self.kill_screen()
                 break
+            if char == 99:
+                self.cheat()
             if not self.is_game_over():
                 if char == curses.KEY_RIGHT:
                     self.game_action('right')
@@ -303,6 +318,13 @@ class TerminalGame(CoreGame):
                     self.reset_game()
             self.draw_game()
         self.kill_screen()
+
+    def cheat(self):
+        """Hidden cheat option :D."""
+        previous_board = self.board.copy()
+
+        previous_board_flat_sort = np.sort(previous_board.flatten())[::-1]
+        self.board = previous_board_flat_sort.reshape(self.height, self.width)
 
     def get_board_string(self):
         """Get a string representation of the boardstate."""
