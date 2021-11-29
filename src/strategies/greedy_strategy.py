@@ -39,9 +39,9 @@ class GreedyStrategy():
     def apply(self):
         """Apply the greedy strategy."""
         while not self.game.is_game_over():
+            self.game.draw_game()
             action = self.find_current_best_move(self.game.board)
             self.game.game_action(action)
-        return self.game.board, self.game.score
 
 
 def main():
@@ -49,11 +49,11 @@ def main():
     sys.path.append(
         "/Users/wilhelmsoderqvistwermelin/Documents/Python/Projects/2048/src/"
     )
-    from main import CoreGame
+    from main import TerminalGame
     import numpy as np
     rng = np.random.RandomState()
 
-    game = CoreGame(rng)
+    game = TerminalGame(rng)
     strat = GreedyStrategy(game)
     final_board, final_score = strat.apply()
     print(final_board)
