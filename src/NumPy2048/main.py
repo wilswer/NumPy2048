@@ -11,12 +11,15 @@ import numpy as np
 class CoreGame():
     """Core mechanics of the game 2048 in NumPy."""
 
-    def __init__(self, rng, width=4, height=4):
+    def __init__(self, rng=None, width=4, height=4):
         """Initialize the game."""
         self.width = width
         self.height = height
         self.board = np.zeros((self.height, self.width))
-        self.rng = rng
+        if rng is None:
+            self.rng = np.random.RandomState()
+        else:
+            self.rng = rng
         self.score = 0
         self.spawn(2)
         self.action_history = []
@@ -465,10 +468,6 @@ def main():
         type=float,
     )
     args = parser.parse_args()
-    if args.seed is None:
-        rng = np.random.RandomState()
-    else:
-        rng = np.random.RandomState(args.seed)
     if args.size is None:
         game = TerminalGame(
             rng=rng,
