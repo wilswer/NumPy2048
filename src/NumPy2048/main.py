@@ -7,19 +7,25 @@ import argparse
 import curses
 import numpy as np
 
+try:
+    import importlib.resources as pkg_resources
+except ImportError:
+    # Try backported to PY<37 `importlib_resources`.
+    import importlib_resources as pkg_resources
+
 
 class CoreGame():
     """Core mechanics of the game 2048 in NumPy."""
 
-    def __init__(self, rng=None, width=4, height=4):
+    def __init__(self, seed=None, width=4, height=4):
         """Initialize the game."""
         self.width = width
         self.height = height
         self.board = np.zeros((self.height, self.width))
-        if rng is None:
+        if seed is None:
             self.rng = np.random.RandomState()
         else:
-            self.rng = rng
+            self.rng = np.random.RandomState(seed)
         self.score = 0
         self.spawn(2)
         self.action_history = []
@@ -219,9 +225,9 @@ class CoreGame():
 class TerminalGame(CoreGame):
     """Terminal implementation of 2048."""
 
-    def __init__(self, rng, width=4, height=4):
+    def __init__(self, seed=None, width=4, height=4):
         """Initialize the class."""
-        super().__init__(rng, width, height)
+        super().__init__(seed, width, height)
         self.stdscr = curses.initscr()
         self.initialize_screen()
 
@@ -237,6 +243,15 @@ class TerminalGame(CoreGame):
         rows = os.get_terminal_size().lines
         board_string = self.get_board_string()
 
+        # info_string = pkgutil.get_data(
+        #     __name__,
+        #     os.path.join('assets', '2048.txt')
+        # )
+        # info_string = pkg_resources.read_text(
+        #     __name__,
+        #     os.path.join('assets', '2048.txt')
+        # )
+        # info_string += "\n\n"
         with open(os.path.join('assets', '2048.txt'), 'r') as file:
             info_string = file.read()
             info_string += "\n\n"
@@ -470,13 +485,13 @@ def main():
     args = parser.parse_args()
     if args.size is None:
         game = TerminalGame(
-            rng=rng,
+            seed=args.seed,
             height=args.height,
             width=args.width,
         )
     else:
         game = TerminalGame(
-            rng=rng,
+            seed=args.seed,
             height=args.size,
             width=args.size,
         )
@@ -497,5 +512,4 @@ def main():
 
 
 if __name__ == '__main__':
-
     main()

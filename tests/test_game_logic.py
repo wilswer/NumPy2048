@@ -4,8 +4,8 @@ import numpy as np
 from NumPy2048.main import CoreGame
 
 
-def game_logic_test():
-    """Game logic test"""
+def test_game_logic():
+    """Game logic test."""
     game = CoreGame()
     test_path = os.path.join("test_files")
     test_dir = os.listdir(test_path)
@@ -48,7 +48,7 @@ def game_logic_test():
 
 
 def main():
-    game_logic_test()
+    test_game_logic()
 
 
 if __name__ == '__main__':
