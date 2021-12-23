@@ -2,16 +2,11 @@
 import os
 import sys
 import traceback
+import pkg_resources
 import time
 import argparse
 import curses
 import numpy as np
-
-try:
-    import importlib.resources as pkg_resources
-except ImportError:
-    # Try backported to PY<37 `importlib_resources`.
-    import importlib_resources as pkg_resources
 
 
 class CoreGame():
@@ -116,7 +111,6 @@ class CoreGame():
 
     def merge(self, action_str, board, score):
         """Merge adjacent values after action given the action."""
-
         if action_str == "up":
             for col in range(self.width):
                 for row in range(self.height-1):
@@ -242,17 +236,11 @@ class TerminalGame(CoreGame):
         cols = os.get_terminal_size().columns
         rows = os.get_terminal_size().lines
         board_string = self.get_board_string()
-
-        # info_string = pkgutil.get_data(
-        #     __name__,
-        #     os.path.join('assets', '2048.txt')
-        # )
-        # info_string = pkg_resources.read_text(
-        #     __name__,
-        #     os.path.join('assets', '2048.txt')
-        # )
-        # info_string += "\n\n"
-        with open(os.path.join('assets', '2048.txt'), 'r') as file:
+        file_name = pkg_resources.resource_filename(
+            __name__,
+            'assets/2048.txt'
+        )
+        with open(file_name, 'r') as file:
             info_string = file.read()
             info_string += "\n\n"
         self.header_string = info_string
