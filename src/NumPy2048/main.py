@@ -109,48 +109,68 @@ class CoreGame():
 
         return new_board, score
 
+    def _up_merge(self, board, score):
+        """Merge when action is up."""
+        for col in range(self.width):
+            for row in range(self.height - 1):
+                if board[row, col] == 0:
+                    continue
+                if board[row, col] == board[row + 1, col]:
+                    board[row, col] = 2 * board[row, col]
+                    board[row + 1:-1, col] = board[row + 2:, col]
+                    board[-1, col] = 0
+                    score += board[row, col]
+        return board, score
+
+    def _down_merge(self, board, score):
+        """Merge when action is down."""
+        for col in range(self.width):
+            for row in range(self.height - 1, 0, -1):
+                if board[row, col] == 0:
+                    continue
+                if board[row, col] == board[row - 1, col]:
+                    board[row, col] = 2 * board[row, col]
+                    board[1:row, col] = board[:row - 1, col]
+                    board[0, col] = 0
+                    score += board[row, col]
+        return board, score
+
+    def _left_merge(self, board, score):
+        """Merge when action is left."""
+        for row in range(self.height):
+            for col in range(self.width - 1):
+                if board[row, col] == 0:
+                    continue
+                if board[row, col] == board[row, col + 1]:
+                    board[row, col] = 2 * board[row, col]
+                    board[row, col + 1:-1] = board[row, col + 2:]
+                    board[row, -1] = 0
+                    score += board[row, col]
+        return board, score
+
+    def _right_merge(self, board, score):
+        """Merge when action is right."""
+        for row in range(self.height):
+            for col in range(self.width - 1, 0, -1):
+                if board[row, col] == 0:
+                    continue
+                if board[row, col] == board[row, col - 1]:
+                    board[row, col] = 2 * board[row, col]
+                    board[row, 1:col] = board[row, :col - 1]
+                    board[row, 0] = 0
+                    score += board[row, col]
+        return board, score
+
     def merge(self, action_str, board, score):
         """Merge adjacent values after action given the action."""
         if action_str == "up":
-            for col in range(self.width):
-                for row in range(self.height-1):
-                    if board[row, col] == 0:
-                        continue
-                    if board[row, col] == board[row + 1, col]:
-                        board[row, col] = 2*board[row, col]
-                        board[row+1:-1, col] = board[row+2:, col]
-                        board[-1, col] = 0
-                        score += board[row, col]
+            board, score = self._up_merge(board, score)
         if action_str == "down":
-            for col in range(self.width):
-                for row in range(self.height-1, 0, -1):
-                    if board[row, col] == 0:
-                        continue
-                    if board[row, col] == board[row - 1, col]:
-                        board[row, col] = 2*board[row, col]
-                        board[1:row, col] = board[:row - 1, col]
-                        board[0, col] = 0
-                        score += board[row, col]
+            board, score = self._down_merge(board, score)
         if action_str == "left":
-            for row in range(self.height):
-                for col in range(self.width - 1):
-                    if board[row, col] == 0:
-                        continue
-                    if board[row, col] == board[row, col + 1]:
-                        board[row, col] = 2*board[row, col]
-                        board[row, col+1:-1] = board[row, col + 2:]
-                        board[row, -1] = 0
-                        score += board[row, col]
+            board, score = self._left_merge(board, score)
         if action_str == "right":
-            for row in range(self.height):
-                for col in range(self.width-1, 0, -1):
-                    if board[row, col] == 0:
-                        continue
-                    if board[row, col] == board[row, col - 1]:
-                        board[row, col] = 2*board[row, col]
-                        board[row, 1:col] = board[row, :col - 1]
-                        board[row, 0] = 0
-                        score += board[row, col]
+            board, score = self._right_merge(board, score)
         return board, score
 
     def valid_action(self, action_str, board):
@@ -255,12 +275,12 @@ class TerminalGame(CoreGame):
 
         board_string = info_string + board_string
         board_string_lst = board_string.split('\n')
-        pad_string = "\n"*((rows - len(board_string_lst))//2)
+        pad_string = "\n" * ((rows - len(board_string_lst)) // 2)
         board_string = pad_string + board_string + pad_string
         board_string_lst = board_string.split('\n')
         for r, l in enumerate(board_string_lst):
-            col = cols//2 - len(l)//2
-            row = rows//2 - len(board_string_lst)//2 + r
+            col = (cols - len(l)) // 2
+            row = (rows - len(board_string_lst)) // 2 + r
             self.stdscr.addstr(row, col, l)
 
     def kill_screen(self):
@@ -291,14 +311,14 @@ class TerminalGame(CoreGame):
 
         board_string = info_string + board_string
         board_string_lst = board_string.split('\n')
-        pad_string = "\n"*((rows - len(board_string_lst))//2)
+        pad_string = "\n" * ((rows - len(board_string_lst)) // 2)
         board_string = pad_string + board_string + pad_string
         board_string_lst = board_string.split('\n')
         self.stdscr.refresh()
         self.stdscr.erase()
         for r, l in enumerate(board_string_lst):
-            col = cols//2 - len(l)//2
-            row = rows//2 - len(board_string_lst)//2 + r
+            col = (cols - len(l)) // 2
+            row = (rows - len(board_string_lst)) // 2 + r
             self.stdscr.addstr(row, col, l)
 
     def run_game(self):
@@ -335,7 +355,7 @@ class TerminalGame(CoreGame):
     def get_board_string(self):
         """Get a string representation of the boardstate."""
         board_string = f"Score: {int(self.score)}" + "\n"
-        board_string += "+-----"*self.width
+        board_string += "+-----" * self.width
         board_string += "+\n"
         for row in self.board:
             board_string += "|"
@@ -355,7 +375,7 @@ class TerminalGame(CoreGame):
                 else:
                     board_string += "     |"
             board_string += "\n"
-            board_string += "+-----"*self.width
+            board_string += "+-----" * self.width
             board_string += "+\n"
         return board_string
 

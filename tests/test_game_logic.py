@@ -1,5 +1,6 @@
 import os
 import json
+import pkg_resources
 import numpy as np
 from NumPy2048.main import CoreGame
 
@@ -7,10 +8,14 @@ from NumPy2048.main import CoreGame
 def test_game_logic():
     """Game logic test."""
     game = CoreGame()
-    test_path = os.path.join("test_files")
+    test_path = "tests/test_files"
     test_dir = os.listdir(test_path)
     for f in test_dir:
-        with open(os.path.join(test_path, f)) as fp:
+        file_name = pkg_resources.resource_filename(
+            __name__,
+            f'test_files/{f}'
+        )
+        with open(file_name) as fp:
             test_dict = json.load(fp)
         start_board = np.array(test_dict['start_board'])
         out_dict = test_dict['outputs']
