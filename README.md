@@ -31,3 +31,5 @@ Install requirements using pip or your favorite Python package manager.
 These packages are required for executing the code in this repository:
 - `numpy`
 - For windows systems: `windows-curses`
+
+![Tests](https://github.com/wilswer/NumPy2048/actions/workflows/tests.yml/badge.svg)
