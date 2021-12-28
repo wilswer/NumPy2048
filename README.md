@@ -27,9 +27,13 @@ A terminal-based NumPy implementation of the game "2048" originally created by G
 - Additional arguments can be passed, use `python main.py --help` to view them.
 
 ## Requirements
+This software is tested on Python3.6 or higher.
 Install requirements using pip or your favorite Python package manager.
 These packages are required for executing the code in this repository:
 - `numpy`
 - For windows systems: `windows-curses`
+
+## Installation
+To install this package, run: `pip install git+https://github.com/wilswer/NumPy2048.git@main`.
 
 ![Tests](https://github.com/wilswer/NumPy2048/actions/workflows/tests.yml/badge.svg)
