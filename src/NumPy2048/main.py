@@ -243,11 +243,16 @@ class CoreGame():
 
     def step(self, action):
         """Make a gym-like environment step."""
+        action_str = self.action_dict[action]
         previous_score = self.score
-        self.game_action(self.action_dict[action])
+        previous_board = self.board
+        self.game_action(action_str)
         observation = self.board
-        reward = self.score - previous_score
         done = self.is_game_over()
+        if self.valid_action(action_str, previous_board):
+            reward = self.score - previous_score
+        else:
+            reward = -1
 
         return observation, reward, done
 
