@@ -24,6 +24,12 @@ class CoreGame():
         self.score = 0
         self.spawn(2)
         self.action_history = []
+        self.action_dict = {
+            0: 'up',
+            1: 'down',
+            2: 'right',
+            3: 'left',
+        }
 
     def spawn(self, n_spawns=1):
         """Spawn either 2 or 4 in a vacant position on the board."""
@@ -229,11 +235,21 @@ class CoreGame():
         """Clear the board."""
         self.board = np.zeros((self.height, self.width))
 
-    def reset_game(self):
+    def reset(self):
         """Reset the game."""
         self.clear_board()
         self.score = 0
         self.spawn(2)
+
+    def step(self, action):
+        """Make a gym-like environment step."""
+        previous_score = self.score
+        self.game_action(self.action_dict[action])
+        observation = self.board
+        reward = self.score - previous_score
+        done = self.is_game_over()
+
+        return observation, reward, done
 
 
 class TerminalGame(CoreGame):
@@ -341,7 +357,7 @@ class TerminalGame(CoreGame):
                     self.game_action('down')
             else:
                 if char == 114:
-                    self.reset_game()
+                    self.reset()
             self.draw_game()
         self.kill_screen()
 
@@ -419,7 +435,7 @@ class TerminalGame(CoreGame):
                     self.kill_screen()
                     break
                 if char == 114:  # q
-                    self.reset_game()
+                    self.reset()
         self.kill_screen()
 
 
