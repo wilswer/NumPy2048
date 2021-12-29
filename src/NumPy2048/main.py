@@ -240,6 +240,7 @@ class CoreGame():
         self.clear_board()
         self.score = 0
         self.spawn(2)
+        self.action_history = []
 
     def step(self, action):
         """Make a gym-like environment step."""
