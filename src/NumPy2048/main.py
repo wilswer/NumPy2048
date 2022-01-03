@@ -43,7 +43,7 @@ class CoreGame():
             self.board[
                 vacant_positions[position][0],
                 vacant_positions[position][1]
-            ] = 2 if self.rng.rand() > 0.5 else 4
+            ] = 2 if self.rng.rand() > 0.1 else 4
 
     def find_vacant_positions(self):
         """Find vacant positions on the board."""
