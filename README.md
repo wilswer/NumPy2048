@@ -37,6 +37,8 @@ To install this package, run: `pip install git+https://github.com/wilswer/NumPy2
 Either clone this repository and install the dependencies and then:
 - Basic usage: `python main.py` launches the game in "interactive" mode.
 - Additional arguments can be passed, use `python main.py --help` to view them.
+
 or install this package according to the installation instructions, then:
+
 - Basic usage: `cli-2048` launches the game in "interactive" mode.
 - Additional arguments can be passed, use `cli-2048 --help` to view them.
