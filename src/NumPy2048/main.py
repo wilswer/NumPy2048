@@ -445,7 +445,7 @@ class TerminalGame(CoreGame):
         self.kill_screen()
 
 
-def main():
+def terminal_2048():
     """Parse arguments and run script."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -542,4 +542,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    terminal_2048()
