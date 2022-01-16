@@ -31,7 +31,7 @@ These packages are required for executing the code in this repository:
 - For windows systems: `windows-curses`
 
 ## Installation
-To install this package, run: `pip install git+https://github.com/wilswer/NumPy2048.git@main`.
+To install this package, run: `pip install git+https://github.com/wilswer/NumPy2048.git`.
 
 ## Usage
 Either clone this repository and install the dependencies and then:
