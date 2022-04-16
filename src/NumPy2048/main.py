@@ -9,7 +9,7 @@ import curses
 import numpy as np
 
 
-class CoreGame():
+class CoreGame:
     """Core mechanics of the game 2048 in NumPy."""
 
     def __init__(self, seed=None, width=4, height=4):
@@ -18,17 +18,17 @@ class CoreGame():
         self.height = height
         self.board = np.zeros((self.height, self.width))
         if seed is None:
-            self.rng = np.random.RandomState()
+            self.rng = np.random.default_rng()
         else:
-            self.rng = np.random.RandomState(seed)
+            self.rng = np.random.default_rng(seed)
         self.score = 0
         self.spawn(2)
         self.action_history = []
         self.action_dict = {
-            0: 'up',
-            1: 'down',
-            2: 'right',
-            3: 'left',
+            0: "up",
+            1: "down",
+            2: "right",
+            3: "left",
         }
 
     def spawn(self, n_spawns=1):
@@ -40,10 +40,9 @@ class CoreGame():
                 return
 
             position = self.rng.choice(len(vacant_positions), 1)[0]
-            self.board[
-                vacant_positions[position][0],
-                vacant_positions[position][1]
-            ] = 2 if self.rng.rand() > 0.1 else 4
+            self.board[vacant_positions[position][0], vacant_positions[position][1]] = (
+                2 if self.rng.random() > 0.1 else 4
+            )
 
     def find_vacant_positions(self):
         """Find vacant positions on the board."""
@@ -64,24 +63,16 @@ class CoreGame():
                 continue
 
             if action_str == "up":
-                new_board[
-                    :len(non_empty_places),
-                    col
-                ] = previous_board[non_empty_places, col]
-                new_board[
-                    -len(empty_places):,
-                    col
-                ] = previous_board[empty_places, col]
+                new_board[: len(non_empty_places), col] = previous_board[
+                    non_empty_places, col
+                ]
+                new_board[-len(empty_places) :, col] = previous_board[empty_places, col]
 
             if action_str == "down":
-                new_board[
-                    -len(non_empty_places):,
-                    col
-                ] = previous_board[non_empty_places, col]
-                new_board[
-                    :len(empty_places),
-                    col
-                ] = previous_board[empty_places, col]
+                new_board[-len(non_empty_places) :, col] = previous_board[
+                    non_empty_places, col
+                ]
+                new_board[: len(empty_places), col] = previous_board[empty_places, col]
 
         for row in range(self.height):
             empty_places = np.argwhere(new_board[row, :] == 0).flatten()
@@ -92,24 +83,16 @@ class CoreGame():
                 continue
 
             if action_str == "left":
-                new_board[
-                    row,
-                    :len(non_empty_places)
-                ] = previous_board[row, non_empty_places]
-                new_board[
-                    row,
-                    -len(empty_places):
-                ] = previous_board[row, empty_places]
+                new_board[row, : len(non_empty_places)] = previous_board[
+                    row, non_empty_places
+                ]
+                new_board[row, -len(empty_places) :] = previous_board[row, empty_places]
 
             if action_str == "right":
-                new_board[
-                    row,
-                    -len(non_empty_places):
-                ] = previous_board[row, non_empty_places]
-                new_board[
-                    row,
-                    :len(empty_places)
-                ] = previous_board[row, empty_places]
+                new_board[row, -len(non_empty_places) :] = previous_board[
+                    row, non_empty_places
+                ]
+                new_board[row, : len(empty_places)] = previous_board[row, empty_places]
 
         new_board, score = self.merge(action_str, new_board, previous_score)
 
@@ -123,7 +106,7 @@ class CoreGame():
                     continue
                 if board[row, col] == board[row + 1, col]:
                     board[row, col] = 2 * board[row, col]
-                    board[row + 1:-1, col] = board[row + 2:, col]
+                    board[row + 1 : -1, col] = board[row + 2 :, col]
                     board[-1, col] = 0
                     score += board[row, col]
         return board, score
@@ -136,7 +119,7 @@ class CoreGame():
                     continue
                 if board[row, col] == board[row - 1, col]:
                     board[row, col] = 2 * board[row, col]
-                    board[1:row, col] = board[:row - 1, col]
+                    board[1:row, col] = board[: row - 1, col]
                     board[0, col] = 0
                     score += board[row, col]
         return board, score
@@ -149,7 +132,7 @@ class CoreGame():
                     continue
                 if board[row, col] == board[row, col + 1]:
                     board[row, col] = 2 * board[row, col]
-                    board[row, col + 1:-1] = board[row, col + 2:]
+                    board[row, col + 1 : -1] = board[row, col + 2 :]
                     board[row, -1] = 0
                     score += board[row, col]
         return board, score
@@ -162,7 +145,7 @@ class CoreGame():
                     continue
                 if board[row, col] == board[row, col - 1]:
                     board[row, col] = 2 * board[row, col]
-                    board[row, 1:col] = board[row, :col - 1]
+                    board[row, 1:col] = board[row, : col - 1]
                     board[row, 0] = 0
                     score += board[row, col]
         return board, score
@@ -190,11 +173,7 @@ class CoreGame():
     def update_game(self, action_str):
         """Given an action, update the game state and spawn a new number."""
         if self.valid_action(action_str, self.board):
-            self.board, self.score = self.action(
-                action_str,
-                self.board,
-                self.score
-            )
+            self.board, self.score = self.action(action_str, self.board, self.score)
             self.spawn()
         else:
             pass
@@ -224,9 +203,7 @@ class CoreGame():
             return False
 
         for action in action_list:
-            check_board, check_score = self.action(
-                action, self.board, self.score
-            )
+            check_board, check_score = self.action(action, self.board, self.score)
             if not (check_board == current_board).all():
                 return False
         return True
@@ -278,11 +255,8 @@ class TerminalGame(CoreGame):
         cols = os.get_terminal_size().columns
         rows = os.get_terminal_size().lines
         board_string = self.get_board_string()
-        file_name = pkg_resources.resource_filename(
-            __name__,
-            'assets/2048.txt'
-        )
-        with open(file_name, 'r') as file:
+        file_name = pkg_resources.resource_filename(__name__, "assets/2048.txt")
+        with open(file_name, "r") as file:
             info_string = file.read()
             info_string += "\n\n"
         self.header_string = info_string
@@ -296,10 +270,10 @@ class TerminalGame(CoreGame):
             info_string += "\n\n"
 
         board_string = info_string + board_string
-        board_string_lst = board_string.split('\n')
+        board_string_lst = board_string.split("\n")
         pad_string = "\n" * ((rows - len(board_string_lst)) // 2)
         board_string = pad_string + board_string + pad_string
-        board_string_lst = board_string.split('\n')
+        board_string_lst = board_string.split("\n")
         for r, l in enumerate(board_string_lst):
             col = (cols - len(l)) // 2
             row = (rows - len(board_string_lst)) // 2 + r
@@ -332,10 +306,10 @@ class TerminalGame(CoreGame):
             info_string += "Press 'R' to reset.\n\n"
 
         board_string = info_string + board_string
-        board_string_lst = board_string.split('\n')
+        board_string_lst = board_string.split("\n")
         pad_string = "\n" * ((rows - len(board_string_lst)) // 2)
         board_string = pad_string + board_string + pad_string
-        board_string_lst = board_string.split('\n')
+        board_string_lst = board_string.split("\n")
         self.stdscr.refresh()
         self.stdscr.erase()
         for r, l in enumerate(board_string_lst):
@@ -354,13 +328,13 @@ class TerminalGame(CoreGame):
                 self.cheat()
             if not self.is_game_over():
                 if char == curses.KEY_RIGHT:
-                    self.game_action('right')
+                    self.game_action("right")
                 if char == curses.KEY_LEFT:
-                    self.game_action('left')
+                    self.game_action("left")
                 if char == curses.KEY_UP:
-                    self.game_action('up')
+                    self.game_action("up")
                 if char == curses.KEY_DOWN:
-                    self.game_action('down')
+                    self.game_action("down")
             else:
                 if char == 114:
                     self.reset()
@@ -405,14 +379,13 @@ class TerminalGame(CoreGame):
         """Simulate the game given some sequence of actions."""
         self.spawn(2)
         str_cntr = 0
-        action_list = ['up', 'down', 'right', 'left']
-        previous_action = ''
+        action_list = ["up", "down", "right", "left"]
+        previous_action = ""
         while True:
             if not self.is_game_over():
                 if not strategy_str:
                     action = self.rng.choice(
-                        [i for i in action_list if i != previous_action],
-                        1
+                        [i for i in action_list if i != previous_action], 1
                     )
                     action = action[0]
                     self.update_game(action)
@@ -449,55 +422,43 @@ def terminal_2048():
     """Parse arguments and run script."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--height",
-        default=4,
-        help="Choose board height",
-        type=int,
+        "--height", default=4, help="Choose board height", type=int,
     )
     parser.add_argument(
-        "--width",
-        default=4,
-        help="Choose board size width",
-        type=int,
+        "--width", default=4, help="Choose board size width", type=int,
     )
     parser.add_argument(
-        "--seed",
-        default=None,
-        help="Choose RNG seed",
-        type=int,
+        "--seed", default=None, help="Choose RNG seed", type=int,
     )
     parser.add_argument(
-        "--size",
-        default=None,
-        help="Choose board size (size x size square)",
-        type=int,
+        "--size", default=None, help="Choose board size (size x size square)", type=int,
     )
     parser.add_argument(
         "--play",
-        dest='play',
+        dest="play",
         default=True,
         help="Run in interactive play mode",
-        action='store_true',
+        action="store_true",
     )
     parser.add_argument(
         "--simulate",
-        dest='play',
+        dest="play",
         default=False,
         help="Run in simulate mode",
-        action='store_false',
+        action="store_false",
     )
     parser.add_argument(
         "--draw",
-        dest='draw',
+        dest="draw",
         default=True,
         help="Draw board in simulate mode",
-        action='store_true',
+        action="store_true",
     )
     parser.add_argument(
         "--no-draw",
-        dest='draw',
+        dest="draw",
         help="Do not draw board in simulate mode",
-        action='store_false',
+        action="store_false",
     )
     parser.add_argument(
         "--strategy",
@@ -507,32 +468,22 @@ def terminal_2048():
     )
     parser.add_argument(
         "--sleep-time",
-        dest='sleep_time',
+        dest="sleep_time",
         default=0.0,
         help="Set simulation printing speed (waiting time between iterations)",
         type=float,
     )
     args = parser.parse_args()
     if args.size is None:
-        game = TerminalGame(
-            seed=args.seed,
-            height=args.height,
-            width=args.width,
-        )
+        game = TerminalGame(seed=args.seed, height=args.height, width=args.width,)
     else:
-        game = TerminalGame(
-            seed=args.seed,
-            height=args.size,
-            width=args.size,
-        )
+        game = TerminalGame(seed=args.seed, height=args.size, width=args.size,)
     try:
         if args.play:
             game.run_game()
         else:
             game.simulate_game(
-                args.strategy,
-                args.draw,
-                args.sleep_time,
+                args.strategy, args.draw, args.sleep_time,
             )
     except Exception:
         game.kill_screen()
@@ -541,5 +492,5 @@ def terminal_2048():
         sys.exit()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     terminal_2048()
